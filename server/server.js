@@ -11,6 +11,9 @@ import checkInRoutes from "./routes/checkin.routes.js";
 import confidenceRoutes from "./routes/confidence.routes.js";
 import workoutRoutes from "./routes/workout.routes.js";
 import nutritionRoutes from "./routes/nutrition.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
+import historyRoutes from "./routes/history.routes.js";
+
 
 dotenv.config();
 console.log("Gemini Key Loaded:", process.env.GEMINI_API_KEY);
@@ -42,6 +45,16 @@ app.use("/api/checkin", checkInRoutes);
 app.use("/api/confidence", confidenceRoutes);
 app.use("/api/workout", workoutRoutes);
 app.use("/api/nutrition", nutritionRoutes);
+app.use(
+  "/api/dashboard",
+  dashboardRoutes
+);
+app.use(
+  "/api/history",
+  historyRoutes
+);
+
+
 
 
 

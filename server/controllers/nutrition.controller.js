@@ -1,109 +1,73 @@
 import Meal from "../models/Meal.js";
-import User from "../models/User.js";
+import Onboarding from "../models/Onboarding.js";
 import CheckIn from "../models/CheckIn.js";
+
 import { nutritionPrompt } from "../prompts/nutrition.prompt.js";
 import { generateNutritionAI } from "../services/nutrition/nutrition.service.js";
 
+import {
+  successResponse,
+  errorResponse,
+} from "../utils/response.js";
 
-export const generateNutritionPlan = async (req, res) => {
+export const generateNutrition = async (
+  req,
+  res
+) => {
   try {
+    const onboarding = await Onboarding.findOne({
+      user: req.user._id,
+    });
 
-    const userId = req.user.id;
+    const latest = await CheckIn.findOne({
+      user: req.user._id,
+    }).sort({
+      createdAt: -1,
+    });
 
-
-    // Get user onboarding data
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      });
+    if (!onboarding || !latest) {
+      return errorResponse(
+        res,
+        "Complete onboarding and check-in first",
+        400
+      );
     }
 
-
-    // Get latest check-in
-    const checkIn = await CheckIn
-      .findOne({ user: userId })
-      .sort({ createdAt: -1 });
-
-
-    if (!checkIn) {
-      return res.status(400).json({
-        message: "Complete daily check-in before generating nutrition plan"
-      });
-    }
-
-
-    // Create AI prompt
     const prompt = nutritionPrompt(
-      user,
-      checkIn
+      onboarding,
+      latest
     );
 
+    const raw = await generateNutritionAI(prompt);
 
-    // Generate nutrition using Groq
-    const aiResponse = await generateNutritionAI(prompt);
+    console.log(raw);
 
+    const cleaned = raw
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
 
-    // Convert AI JSON string into object
-    let nutritionPlan;
+    const plan = JSON.parse(cleaned);
 
-    try {
-      nutritionPlan = JSON.parse(aiResponse);
-    } 
-    catch (error) {
-
-      return res.status(500).json({
-        message: "AI returned invalid JSON",
-        response: aiResponse
-      });
-
-    }
-
-
-
-    // Save nutrition plan
-    const mealPlan = await Meal.create({
-
-      user: userId,
-
-      goal: user.fitnessGoal,
-
-      calories: nutritionPlan.dailyCalories,
-
-      plan: nutritionPlan,
-
-      generatedBy: "Groq AI"
-
+    const saved = await Meal.create({
+      user: req.user._id,
+      goal: onboarding.fitnessGoal,
+      calories: plan.dailyCalories,
+      plan,
     });
 
-
-
-    res.status(201).json({
-
-      message: "Nutrition plan generated successfully",
-
-      nutritionPlan: mealPlan
-
-    });
-
-
-
-  } catch (error) {
-
-    console.error(
-      "Nutrition generation error:",
-      error
+    return successResponse(
+      res,
+      "Nutrition Plan Generated",
+      saved
     );
+  } catch (err) {
+    console.log(err);
 
-
-    res.status(500).json({
-
-      message: "Failed to generate nutrition plan",
-
-      error: error.message
-
-    });
-
+    return errorResponse(
+      res,
+      "Nutrition generation failed",
+      500
+    );
   }
 };
