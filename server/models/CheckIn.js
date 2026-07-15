@@ -34,6 +34,8 @@ const checkInSchema = new mongoose.Schema(
       required: true,
     },
 
+    weight: Number,
+
     motivation: {
       type: Number,
       min: 1,

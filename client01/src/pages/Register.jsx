@@ -8,7 +8,7 @@ const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,8 +20,8 @@ const Register = () => {
     setError('');
 
     // Validations
-    if (!username) {
-      setError('Username is required');
+    if (!fullName) {
+      setError('Full name is required');
       return;
     }
     if (!email) {
@@ -47,7 +47,7 @@ const Register = () => {
 
     setIsSubmitting(true);
     try {
-      await register(username, email, password);
+      await register(fullName, email, password);
       // New accounts require onboarding setup
       navigate('/onboarding');
     } catch (err) {
@@ -93,18 +93,18 @@ const Register = () => {
 
         {/* Registration Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Username Input */}
+          {/* Full Name Input */}
           <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">Username</label>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">Full Name</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
                 <User className="h-4.5 w-4.5 text-slate-500" />
               </span>
               <input
                 type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="FitAthlete"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Jordan Smith"
                 className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2.5 pl-11 pr-4 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all duration-300"
                 disabled={isSubmitting}
               />

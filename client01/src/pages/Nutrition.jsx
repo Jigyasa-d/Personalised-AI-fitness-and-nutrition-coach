@@ -1,324 +1,188 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Apple, Sparkles, Wand2, RefreshCcw, Cpu, Target } from "lucide-react";
 import api from "../api/axios";
 import MealCard from "../components/nutrition/MealCard";
 import MacroChart from "../components/nutrition/MacroChart";
 
-
-export default function Nutrition(){
-
-const [nutrition,setNutrition] = useState(null);
-const [activeDay,setActiveDay] = useState(0);
-const [loading,setLoading] = useState(false);
-
-
-const generateNutrition = async()=>{
-
-try{
-
-setLoading(true);
-
-const res = await api.post("/nutrition/generate");
-
-setNutrition(res.data.data);
-
-}
-catch(err){
-
-console.log(err);
-
-}
-finally{
-
-setLoading(false);
-
-}
-
-};
-
-
-
-return (
-
-<div className="min-h-screen bg-slate-50 p-8 text-slate-900">
-
-
-<div className="flex justify-between items-center">
-
-
-<div>
-
-<h1 className="
-text-5xl
-font-black
-tracking-tight
-">
-AI Nutrition Planner 🍎
-</h1>
-
-
-<p className="
-text-slate-500
-mt-3
-text-lg
-">
-Your AI coach creates personalized nutrition strategies
-</p>
-
-</div>
-
-
-
-<button
-
-onClick={generateNutrition}
-
-className="
-bg-teal-600
-hover:bg-teal-700
-text-white
-px-8
-py-4
-rounded-2xl
-font-bold
-shadow-lg
-transition
-"
-
->
-
-{
-loading
-?
-"Generating..."
-:
-"Generate Nutrition Plan"
-}
-
-
-</button>
-
-
-</div>
-
-
-
-
-
-{
-nutrition &&
-
-<>
-
-
-<div className="
-grid
-grid-cols-4
-gap-6
-mt-10
-">
-
-
-<div className="nutrition-card">
-
-<p>
-Goal
-</p>
-
-<h2>
-{nutrition.goal}
-</h2>
-
-</div>
-
-
-
-<div className="nutrition-card">
-
-<p>
-Calories
-</p>
-
-<h2>
-{nutrition.plan.dailyCalories}
-</h2>
-
-</div>
-
-
-
-<div className="nutrition-card">
-
-<p>
-Protein
-</p>
-
-<h2>
-{nutrition.plan.macros.protein}
-</h2>
-
-</div>
-
-
-
-<MacroChart 
-macros={nutrition.plan.macros}
-/>
-
-
-
-</div>
-
-
-
-
-
-<div className="
-mt-8
-bg-teal-50
-rounded-3xl
-p-8
-border
-border-teal-100
-">
-
-
-<h2 className="
-text-2xl
-font-bold
-">
-🧠 AI Nutrition Intelligence
-</h2>
-
-
-<p className="
-mt-3
-text-slate-600
-">
-
-Your current plan is optimized for 
-<b> {nutrition.goal}</b>.
-Protein distribution and calorie targets
-are aligned with your fitness objective.
-
-</p>
-
-
-</div>
-
-
-
-
-
-
-<div className="
-flex
-gap-3
-mt-10
-overflow-x-auto
-">
-
-
-{
-nutrition.plan.days.map((day,index)=>(
-
-
-<button
-
-key={day.day}
-
-onClick={()=>setActiveDay(index)}
-
-className={
-
-`
-px-6
-py-3
-rounded-xl
-font-bold
-transition
-
-${
-activeDay===index
-?
-"bg-teal-600 text-white"
-:
-"bg-white shadow text-slate-600"
-}
-
-`
-
-}
-
->
-
-{day.day}
-
-</button>
-
-
-))
-
-}
-
-
-</div>
-
-
-
-
-
-<h2 className="
-text-3xl
-font-black
-mt-10
-mb-6
-">
-
-{nutrition.plan.days[activeDay].day}
-
-</h2>
-
-
-
-
-<div className="
-grid
-grid-cols-3
-gap-8
-">
-
-
-{
-nutrition.plan.days[activeDay].meals.map(
-(meal,index)=>(
-
-<MealCard
-
-key={index}
-
-meal={meal}
-
-/>
-
-)
-
-)
-
-}
-
-
-</div>
-
-
-</>
-
-
-}
-
-
-
-</div>
-
-)
-
+export default function Nutrition() {
+  const [nutrition, setNutrition] = useState(null);
+  const [activeDay, setActiveDay] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const generateNutrition = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await api.post("/nutrition/generate");
+      setNutrition(res.data.data);
+      setActiveDay(0);
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.response?.data?.message ||
+        "Failed to generate nutrition plan. Please ensure your onboarding profile is complete."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const plan = nutrition?.plan;
+  const days = plan?.days || [];
+
+  return (
+    <div className="space-y-8 pb-10">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Apple className="h-6 w-6 text-purple-400" />
+            <h1 className="text-3xl font-black text-white tracking-tight">AI Nutrition Planner</h1>
+          </div>
+          <p className="text-slate-400 text-sm">Your AI coach creates personalized nutrition strategies.</p>
+        </div>
+
+        {nutrition && !loading && (
+          <button
+            onClick={generateNutrition}
+            className="flex items-center gap-2 py-2 px-4 bg-slate-900 border border-slate-800 hover:border-purple-500/30 text-xs font-bold text-slate-300 rounded-xl transition-all cursor-pointer"
+          >
+            <RefreshCcw className="h-4 w-4" />
+            Regenerate Meal Plan
+          </button>
+        )}
+      </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-xl text-sm font-semibold">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="glass-card p-12 rounded-3xl border border-purple-500/15 flex flex-col items-center justify-center min-h-[400px]">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 rounded-full bg-purple-500/20 blur-xl animate-pulse"></div>
+            <div className="relative border border-purple-500/40 p-6 rounded-full bg-slate-950/80">
+              <Apple className="h-10 w-10 text-purple-400 animate-bounce" />
+            </div>
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">Compiling Metabolic Index & Recipes</h3>
+          <p className="text-xs text-slate-400 text-center max-w-sm">
+            AI is preparing ingredient quantities and calculating macro alignment based on your goals...
+          </p>
+        </div>
+      ) : nutrition ? (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="space-y-8"
+        >
+          {/* Overview row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="glass-card p-6 rounded-2xl border border-purple-500/10 flex flex-col justify-center">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400 flex items-center gap-1.5 mb-2">
+                <Target className="h-3.5 w-3.5" /> Goal
+              </span>
+              <h2 className="text-xl font-black text-white">{nutrition.goal}</h2>
+            </div>
+
+            <div className="glass-card p-6 rounded-2xl border border-purple-500/10 flex flex-col justify-center">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-2">Daily Calories</span>
+              <h2 className="text-xl font-black text-white">{plan?.dailyCalories} kcal</h2>
+            </div>
+
+            <div className="glass-card p-6 rounded-2xl border border-purple-500/10 flex flex-col justify-center">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2">Protein Target</span>
+              <h2 className="text-xl font-black text-white">{plan?.macros?.protein}</h2>
+            </div>
+
+            {nutrition.generatedBy && (
+              <div className="glass-card p-6 rounded-2xl border border-purple-500/10 flex flex-col justify-center">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1.5 mb-2">
+                  <Cpu className="h-3.5 w-3.5" /> Generated By
+                </span>
+                <h2 className="text-xl font-black text-white">{nutrition.generatedBy}</h2>
+              </div>
+            )}
+          </div>
+
+          {/* Macro chart */}
+          <MacroChart macros={plan?.macros} />
+
+          {/* AI Insight */}
+          <div className="glass-card p-6 rounded-2xl border border-purple-500/10 glow-border-accent bg-gradient-to-br from-slate-950 via-slate-900/80 to-purple-950/10">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Sparkles className="h-4.5 w-4.5 text-purple-400" />
+              AI Nutrition Intelligence
+            </h2>
+            <p className="mt-3 text-sm text-slate-400 leading-relaxed">
+              Your current plan is optimized for <b className="text-slate-200">{nutrition.goal}</b>. Protein
+              distribution and calorie targets are aligned with your fitness objective.
+            </p>
+          </div>
+
+          {/* Day tabs */}
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {days.map((day, index) => (
+              <button
+                key={day.day}
+                onClick={() => setActiveDay(index)}
+                className={`px-5 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all border ${
+                  activeDay === index
+                    ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-400/30 shadow-[0_4px_20px_rgba(139,92,246,0.3)]"
+                    : "bg-slate-900/60 text-slate-400 border-slate-800 hover:border-purple-500/20 hover:text-slate-200"
+                }`}
+              >
+                {day.day}
+              </button>
+            ))}
+          </div>
+
+          {/* Active day meals */}
+          {days[activeDay] && (
+            <div>
+              <h2 className="text-2xl font-black text-white tracking-tight mb-6">{days[activeDay].day}</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {days[activeDay].meals.map((meal, index) => (
+                  <MealCard key={index} meal={meal} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Raw JSON viewer */}
+          <div className="glass-card p-5 rounded-2xl border border-slate-800">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-3">Raw AI Generation Data (JSON)</span>
+            <pre className="text-xs text-purple-400 bg-slate-950/60 p-4 rounded-xl border border-slate-900/60 overflow-x-auto max-h-60 font-mono scrollbar-thin">
+              {JSON.stringify(nutrition, null, 2)}
+            </pre>
+          </div>
+        </motion.div>
+      ) : (
+        <div className="glass-card p-12 rounded-3xl border border-purple-500/15 flex flex-col items-center justify-center text-center min-h-[400px]">
+          <div className="bg-purple-600/10 p-5 rounded-full border border-purple-500/20 mb-6 text-purple-400 shadow-[0_0_20px_rgba(139,92,246,0.1)]">
+            <Sparkles className="h-10 w-10" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Create Your Balanced Meal Strategy</h2>
+          <p className="text-sm text-slate-400 max-w-md mb-8">
+            Let the AI engine calculate a custom caloric strategy split into a full week of meals.
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={generateNutrition}
+            className="flex items-center gap-2.5 py-3.5 px-6 bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-sm rounded-xl border border-purple-400/20 shadow-[0_4px_25px_rgba(139,92,246,0.3)] cursor-pointer"
+          >
+            <Wand2 className="h-4.5 w-4.5" />
+            Generate Nutrition Plan
+          </motion.button>
+        </div>
+      )}
+    </div>
+  );
 }

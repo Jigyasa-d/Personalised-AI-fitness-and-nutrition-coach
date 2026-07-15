@@ -8,17 +8,20 @@ import { useAuth } from '../context/AuthContext';
 const Onboarding = () => {
   const navigate = useNavigate();
   const { setHasOnboarded } = useAuth();
-  
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     age: '',
     height: '',
     weight: '',
+    gender: 'male', // male, female, other
     fitnessGoal: 'build_muscle', // lose_weight, build_muscle, maintain, athletic_performance
+    fitnessLevel: 'beginner', // beginner, intermediate, advanced
     activityLevel: 'moderate', // sedentary, light, moderate, active
     dietPreference: 'standard', // standard, vegetarian, vegan, keto, paleo
+    equipment: [], // dumbbells, barbell, bodyweight, resistance_bands, machines
   });
-  
+
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,9 +64,12 @@ const Onboarding = () => {
         age: parseInt(formData.age, 10),
         height: parseFloat(formData.height),
         weight: parseFloat(formData.weight),
+        gender: formData.gender,
         fitnessGoal: formData.fitnessGoal,
+        fitnessLevel: formData.fitnessLevel,
         activityLevel: formData.activityLevel,
         dietPreference: formData.dietPreference,
+        equipment: formData.equipment,
       };
 
       await api.post('/onboarding', payload);
@@ -97,7 +103,7 @@ const Onboarding = () => {
           </div>
           <div className="flex gap-1">
             {[1, 2, 3].map((s) => (
-              <div 
+              <div
                 key={s}
                 className={`h-1.5 w-8 rounded-full transition-all duration-300 ${s <= step ? 'bg-indigo-500 shadow-[0_0_8px_#6366f1]' : 'bg-slate-800'}`}
               />
@@ -169,6 +175,26 @@ const Onboarding = () => {
                       className="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50"
                       min="1"
                     />
+                  </div>
+
+                  {/* Gender */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">Gender</label>
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {[
+                        { id: 'male', title: 'Male' },
+                        { id: 'female', title: 'Female' },
+                        { id: 'other', title: 'Other' },
+                      ].map((g) => (
+                        <div
+                          key={g.id}
+                          onClick={() => setFormData((p) => ({ ...p, gender: g.id }))}
+                          className={`py-2.5 rounded-xl border cursor-pointer text-center text-xs font-bold transition-all duration-300 ${formData.gender === g.id ? 'bg-indigo-600/10 border-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.1)]' : 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:border-slate-700'}`}
+                        >
+                          {g.title}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -251,6 +277,59 @@ const Onboarding = () => {
                           <p className="text-[9px] text-slate-500 mt-0.5">{act.desc}</p>
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Fitness Level */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">Fitness Level</label>
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {[
+                        { id: 'beginner', title: 'Beginner' },
+                        { id: 'intermediate', title: 'Intermediate' },
+                        { id: 'advanced', title: 'Advanced' },
+                      ].map((lvl) => (
+                        <div
+                          key={lvl.id}
+                          onClick={() => setFormData((p) => ({ ...p, fitnessLevel: lvl.id }))}
+                          className={`py-2.5 rounded-xl border cursor-pointer text-center text-xs font-bold transition-all duration-300 ${formData.fitnessLevel === lvl.id ? 'bg-indigo-600/10 border-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.1)]' : 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:border-slate-700'}`}
+                        >
+                          {lvl.title}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Available Equipment */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">Available Equipment</label>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {[
+                        { id: 'bodyweight', title: 'Bodyweight Only' },
+                        { id: 'dumbbells', title: 'Dumbbells' },
+                        { id: 'barbell', title: 'Barbell' },
+                        { id: 'resistance_bands', title: 'Resistance Bands' },
+                        { id: 'machines', title: 'Gym Machines' },
+                        { id: 'kettlebell', title: 'Kettlebell' },
+                      ].map((eq) => {
+                        const isSelected = formData.equipment.includes(eq.id);
+                        return (
+                          <div
+                            key={eq.id}
+                            onClick={() =>
+                              setFormData((p) => ({
+                                ...p,
+                                equipment: isSelected
+                                  ? p.equipment.filter((item) => item !== eq.id)
+                                  : [...p.equipment, eq.id],
+                              }))
+                            }
+                            className={`py-2.5 px-3 rounded-xl border cursor-pointer text-center text-[11px] font-bold transition-all duration-300 ${isSelected ? 'bg-indigo-600/10 border-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.1)]' : 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:border-slate-700'}`}
+                          >
+                            {eq.title}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

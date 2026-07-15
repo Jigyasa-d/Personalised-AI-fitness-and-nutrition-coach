@@ -8,63 +8,27 @@ const onboardingSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-
     age: Number,
-
     gender: String,
-
     height: Number,
-
     weight: Number,
-
-    fitnessGoal: {
-      type: String,
-      enum: [
-        "Weight Loss",
-        "Muscle Gain",
-        "Strength",
-        "Endurance",
-        "General Fitness",
-      ],
-    },
-
-    fitnessLevel: {
-      type: String,
-      enum: ["Beginner", "Intermediate", "Advanced"],
-    },
-
-    dietaryPreference: {
-      type: String,
-      enum: [
-        "Vegetarian",
-        "Vegan",
-        "Eggetarian",
-        "Non-Vegetarian",
-      ],
-    },
-
+    fitnessGoal: String,
+    fitnessLevel: String,
+    dietPreference: String,
+    activityLevel: String,
     allergies: [String],
-
     injuries: [String],
-
     equipment: [String],
-
     workoutDays: Number,
-
     workoutDuration: Number,
-
     sleepHours: Number,
-
     waterIntake: Number,
-
     confidenceScore: {
       type: Number,
       default: 100,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model("Onboarding", onboardingSchema);

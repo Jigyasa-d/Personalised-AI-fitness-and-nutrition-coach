@@ -4,8 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
   const { user } = useAuth();
-  const userName = user?.username || user?.email?.split('@')[0] || 'Athlete';
-
+const userName = user?.fullName || user?.username || user?.email?.split('@')[0] || 'Athlete';
   return (
     <header className="fixed top-0 right-0 left-64 h-20 glass-panel border-b border-indigo-500/10 flex items-center justify-between px-8 z-20">
       {/* Search Bar */}

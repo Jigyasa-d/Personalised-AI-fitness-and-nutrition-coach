@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  ClipboardCheck, 
-  Activity, 
-  Droplet, 
-  Moon, 
-  Scale, 
-  Brain, 
+import {
+  ClipboardCheck,
+  Activity,
+  Droplet,
+  Moon,
+  Scale,
   Sparkles,
   CheckCircle,
-  Clock
+  Clock,
+  Flame,
+  Zap
 } from 'lucide-react';
 import api from '../api/axios';
 
@@ -20,6 +21,9 @@ const CheckIn = () => {
     waterIntake: '',
     energyLevel: 5,
     stressLevel: 5,
+    soreness: 3,
+    motivation: 7,
+    workoutCompleted: false,
   });
 
   const [latestCheckIn, setLatestCheckIn] = useState(null);
@@ -31,11 +35,13 @@ const CheckIn = () => {
   const fetchLatestCheckIn = async () => {
     try {
       const response = await api.get('/checkin/latest');
-      if (response.data && Object.keys(response.data).length > 0) {
-        setLatestCheckIn(response.data);
+      // Backend wraps the real payload as { success, message, data: {...} }
+      const latest = response.data?.data;
+      if (latest) {
+        setLatestCheckIn(latest);
         // Pre-fill weight with previous weight to save user effort
-        if (response.data.weight) {
-          setFormData(prev => ({ ...prev, weight: response.data.weight }));
+        if (latest.weight) {
+          setFormData(prev => ({ ...prev, weight: latest.weight }));
         }
       }
     } catch (error) {
@@ -81,13 +87,17 @@ const CheckIn = () => {
         sleepHours: parseFloat(formData.sleepHours),
         waterIntake: parseInt(formData.waterIntake, 10),
         energyLevel: parseInt(formData.energyLevel, 10),
-        stressLevel: parseInt(formData.stressLevel, 10)
+        stressLevel: parseInt(formData.stressLevel, 10),
+        soreness: parseInt(formData.soreness, 10),
+        motivation: parseInt(formData.motivation, 10),
+        workoutCompleted: formData.workoutCompleted,
       };
 
       const response = await api.post('/checkin', payload);
       setSuccessMsg('Vitals checked in successfully! AI recommendations updated.');
-      setLatestCheckIn(response.data);
-      
+      // Backend wraps the real payload as { success, message, data: {...} }
+      setLatestCheckIn(response.data?.data);
+
       // Clear form inputs that vary daily
       setFormData(prev => ({
         ...prev,
@@ -95,7 +105,6 @@ const CheckIn = () => {
         waterIntake: '',
       }));
 
-      // Trigger standard status reload in background
       setTimeout(() => setSuccessMsg(''), 5000);
     } catch (err) {
       console.error(err);
@@ -210,17 +219,15 @@ const CheckIn = () => {
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Energy Tier ({formData.energyLevel}/10)</label>
                   <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Optimal Focus</span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={formData.energyLevel}
-                    onChange={(e) => handleSliderChange('energyLevel', parseInt(e.target.value, 10))}
-                    className="w-full h-1.5 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                    disabled={isSubmitting}
-                  />
-                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={formData.energyLevel}
+                  onChange={(e) => handleSliderChange('energyLevel', parseInt(e.target.value, 10))}
+                  className="w-full h-1.5 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                  disabled={isSubmitting}
+                />
               </div>
 
               {/* Stress Level Slider */}
@@ -229,16 +236,62 @@ const CheckIn = () => {
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Stress Index ({formData.stressLevel}/10)</label>
                   <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Calm Mind</span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={formData.stressLevel}
-                    onChange={(e) => handleSliderChange('stressLevel', parseInt(e.target.value, 10))}
-                    className="w-full h-1.5 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                    disabled={isSubmitting}
-                  />
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={formData.stressLevel}
+                  onChange={(e) => handleSliderChange('stressLevel', parseInt(e.target.value, 10))}
+                  className="w-full h-1.5 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              {/* Soreness Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center pl-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Muscle Soreness ({formData.soreness}/10)</label>
+                  <span className="text-[10px] text-rose-400 font-bold uppercase tracking-wider">Recovery Signal</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={formData.soreness}
+                  onChange={(e) => handleSliderChange('soreness', parseInt(e.target.value, 10))}
+                  className="w-full h-1.5 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              {/* Motivation Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center pl-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Motivation ({formData.motivation}/10)</label>
+                  <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Drive Level</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={formData.motivation}
+                  onChange={(e) => handleSliderChange('motivation', parseInt(e.target.value, 10))}
+                  className="w-full h-1.5 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              {/* Workout Completed Toggle */}
+              <div
+                onClick={() => !isSubmitting && setFormData(prev => ({ ...prev, workoutCompleted: !prev.workoutCompleted }))}
+                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all duration-300 ${formData.workoutCompleted ? 'bg-indigo-600/10 border-indigo-500' : 'bg-slate-950/40 border-slate-800'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Flame className={`h-5 w-5 ${formData.workoutCompleted ? 'text-indigo-400' : 'text-slate-500'}`} />
+                  <span className="text-sm font-semibold text-slate-200">Completed today's workout?</span>
+                </div>
+                <div className={`h-6 w-11 rounded-full relative transition-colors ${formData.workoutCompleted ? 'bg-indigo-500' : 'bg-slate-700'}`}>
+                  <div className={`h-5 w-5 bg-white rounded-full absolute top-0.5 transition-all ${formData.workoutCompleted ? 'left-5' : 'left-0.5'}`} />
                 </div>
               </div>
 
@@ -283,7 +336,7 @@ const CheckIn = () => {
                       <Scale className="h-5 w-5 text-indigo-400" />
                       <span className="text-sm font-semibold text-slate-300">Body Weight</span>
                     </div>
-                    <span className="text-base font-black text-white">{latestCheckIn.weight} kg</span>
+                    <span className="text-base font-black text-white">{latestCheckIn.weight ?? '-'} kg</span>
                   </div>
 
                   {/* Sleep */}
@@ -314,6 +367,21 @@ const CheckIn = () => {
                       <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-1">Stress Level</span>
                       <span className="text-xl font-black text-rose-400">{latestCheckIn.stressLevel}/10</span>
                     </div>
+                    <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-xl text-center">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-1">Soreness</span>
+                      <span className="text-xl font-black text-orange-400">{latestCheckIn.soreness}/10</span>
+                    </div>
+                    <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-xl text-center">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-1">Motivation</span>
+                      <span className="text-xl font-black text-emerald-400">{latestCheckIn.motivation}/10</span>
+                    </div>
+                  </div>
+
+                  <div className={`flex items-center justify-center gap-2 p-3 rounded-xl border ${latestCheckIn.workoutCompleted ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-slate-950/40 border-slate-900 text-slate-500'}`}>
+                    <Zap className="h-4 w-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider">
+                      {latestCheckIn.workoutCompleted ? 'Workout Completed Today' : 'Workout Not Yet Completed'}
+                    </span>
                   </div>
                 </div>
               ) : (

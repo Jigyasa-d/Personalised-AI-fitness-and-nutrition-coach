@@ -29,8 +29,9 @@ export const AuthProvider = ({ children }) => {
     if (!token) return false;
     try {
       const response = await api.get('/onboarding');
-      // If we successfully get onboarding details and they are not empty/null
-      if (response.data && Object.keys(response.data).length > 0) {
+      // Backend wraps the real payload as { success, message, data: {...} }
+      const onboardingData = response.data?.data;
+      if (onboardingData && Object.keys(onboardingData).length > 0) {
         setHasOnboarded(true);
         return true;
       }
@@ -81,8 +82,13 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { token: jwtToken, user: userData } = response.data;
-      
+      // Backend wraps the real payload as { success, message, data: { token, user } }
+      const { token: jwtToken, user: userData } = response.data?.data || {};
+
+      if (!jwtToken) {
+        throw new Error('Login failed: no token received from server.');
+      }
+
       setUser(userData || { email });
       if (userData) {
         localStorage.setItem('user', JSON.stringify(userData));
@@ -100,31 +106,36 @@ export const AuthProvider = ({ children }) => {
       return { success: true, onboarded };
     } catch (error) {
       console.error('Login error:', error);
-      const message = error.response?.data?.message || error.response?.data?.detail || 'Invalid email or password';
+      const message = error.response?.data?.message || error.response?.data?.detail || error.message || 'Invalid email or password';
       throw new Error(message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (username, email, password) => {
+  const register = async (fullName, email, password) => {
     setIsLoading(true);
     try {
-      const response = await api.post('/auth/register', { username, email, password });
-      const { token: jwtToken, user: userData } = response.data;
-      
-      setUser(userData || { username, email });
+      const response = await api.post('/auth/register', { fullName, email, password });
+      // Backend wraps the real payload as { success, message, data: { token, user } }
+      const { token: jwtToken, user: userData } = response.data?.data || {};
+
+      if (!jwtToken) {
+        throw new Error('Registration failed: no token received from server.');
+      }
+
+      setUser(userData || { fullName, email });
       if (userData) {
         localStorage.setItem('user', JSON.stringify(userData));
       } else {
-        localStorage.setItem('user', JSON.stringify({ username, email }));
+        localStorage.setItem('user', JSON.stringify({ fullName, email }));
       }
       setToken(jwtToken);
       setHasOnboarded(false);
       return { success: true };
     } catch (error) {
       console.error('Registration error:', error);
-      const message = error.response?.data?.message || error.response?.data?.detail || 'Registration failed';
+      const message = error.response?.data?.message || error.response?.data?.detail || error.message || 'Registration failed';
       throw new Error(message);
     } finally {
       setIsLoading(false);
