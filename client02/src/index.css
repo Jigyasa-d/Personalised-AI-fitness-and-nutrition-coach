@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-sans: "Alice", ui-serif, Georgia, serif;
+  --font-serif: "Alice", ui-serif, Georgia, serif;
 
   --color-ink-950: #0a0a0b;
   --color-ink-900: #111114;
@@ -30,6 +30,7 @@
 
   --radius-xl2: 1.25rem;
 }
+
 
 html, body, #root { height: 100%; }
 body {
